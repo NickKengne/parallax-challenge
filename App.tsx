@@ -1,81 +1,87 @@
-import TopHeader from 'components/TopHeader';
-import { StatusBar, SafeAreaView, View, RefreshControl, Animated, Text } from 'react-native';
+import React, { JSX, useCallback, useMemo, useRef, useState } from 'react';
+import { StatusBar, SafeAreaView, View, RefreshControl, Animated } from 'react-native';
 
 import './global.css';
+import TopHeader from 'components/TopHeader';
 import DisplayPatrimoine from 'components/DisplayPatrimoine';
 import WarningAuthComponent from 'components/WarningAuthComponent';
-import { useEffect, useRef, useState } from 'react';
 import NewsCardCarousel from 'components/NewsCardCarousel';
+import { useScrollAnimation } from 'hooks/useScrollAnimation';
 
-export default function App() {
+const SCROLL_CONFIG = {
+  EXPAND_THRESHOLD: 20,
+  COLLAPSE_THRESHOLD: 5,
+  SCROLL_START_THRESHOLD: 5,
+  SCROLL_END_THRESHOLD: 2,
+  THROTTLE: 16,
+  REFRESH_DURATION: 2000,
+} as const;
+
+const LAYOUT_CONFIG = {
+  HEADER_WIDTH: '94%',
+  CONTENT_WIDTH: '99%',
+} as const;
+
+export default function App(): JSX.Element {
   const [refreshing, setRefreshing] = useState(false);
   const scrollY = useRef(new Animated.Value(0)).current;
-  const [isExpanded, setIsExpanded] = useState(false);
-  const [isScrolling, setIsScrolling] = useState(false);
+  
+  const { isExpanded, isScrolling } = useScrollAnimation(scrollY, SCROLL_CONFIG);
 
-  const onRefresh = () => {
+  const handleRefresh = useCallback(() => {
     setRefreshing(true);
     setTimeout(() => {
       setRefreshing(false);
-    }, 2000);
-  };
+    }, SCROLL_CONFIG.REFRESH_DURATION);
+  }, []);
 
-  useEffect(() => {
-    const subscription = scrollY.addListener((event) => {
-      const scrollValue = event.value;
-      
-      if (scrollValue > 15 && !isExpanded) {
-        setIsExpanded(true);
-      } else if (scrollValue <= 5 && isExpanded) {
-        setIsExpanded(false);
-      }
-      
-      if (scrollValue > 5 && !isScrolling) {
-        setIsScrolling(true);
-      } else if (scrollValue <= 2 && isScrolling) {
-        setIsScrolling(false);
-      }
-    });
+  const scrollViewProps = useMemo(() => ({
+    refreshControl: (
+      <RefreshControl
+        tintColor="white"
+        refreshing={refreshing}
+        onRefresh={handleRefresh}
+      />
+    ),
+    onScroll: Animated.event(
+      [{ nativeEvent: { contentOffset: { y: scrollY } } }],
+      { useNativeDriver: true }
+    ),
+    scrollEventThrottle: SCROLL_CONFIG.THROTTLE,
+    showsVerticalScrollIndicator: false,
+  }), [refreshing, handleRefresh, scrollY]);
 
-    return () => scrollY.removeListener(subscription);
-  }, [isExpanded, isScrolling, scrollY]);
+  const scrollViewStyle = useMemo(() => ({
+    borderTopWidth: isScrolling ? 1 : 0,
+    borderTopColor: '#374151',
+  }), [isScrolling]);
+
+  const newsCarousels = useMemo(() => 
+    Array.from({ length: 7 }, (_, index) => (
+      <NewsCardCarousel key={`carousel-${index}`} />
+    )), 
+  []);
 
   return (
     <SafeAreaView className="flex-1 bg-black">
-      <StatusBar barStyle="light-content" />
-      <View className="mx-auto w-[94%]">
+      <StatusBar barStyle="light-content" backgroundColor="black" />
+      
+      <View className="mx-auto" style={{ width: LAYOUT_CONFIG.HEADER_WIDTH }}>
         <TopHeader />
-        <DisplayPatrimoine scrollY={scrollY} isExpanded={isExpanded} />
+        <DisplayPatrimoine 
+          scrollY={scrollY} 
+          isExpanded={isExpanded} 
+        />
       </View>
+
       <Animated.ScrollView
-        className={`${isScrolling ? 'border border-t-gray-700' : ''}`}
-        refreshControl={
-          <RefreshControl
-            tintColor={'white'}
-            size={12}
-            refreshing={refreshing}
-            onRefresh={onRefresh}
-          />
-        }
-        onScroll={Animated.event(
-          [
-            {
-              nativeEvent: {
-                contentOffset: {
-                  y: scrollY,
-                },
-              },
-            },
-          ],
-          { useNativeDriver: true}
-        )}
-        scrollEventThrottle={16}
+        className="flex-1"
+        style={scrollViewStyle}
+        {...scrollViewProps}
       >
-        <View className="mx-auto w-[99%]">
+        <View className="mx-auto" style={{ width: LAYOUT_CONFIG.CONTENT_WIDTH }}>
           <WarningAuthComponent />
-          <NewsCardCarousel />
-          <NewsCardCarousel />
-          <NewsCardCarousel />
+          {newsCarousels}
         </View>
       </Animated.ScrollView>
     </SafeAreaView>

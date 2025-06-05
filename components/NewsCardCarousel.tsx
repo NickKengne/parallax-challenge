@@ -7,31 +7,26 @@ const cards = [
     id: '1',
     title: 'COMMUNAUTÉ FINARY',
     text: "Echangez avec d'autres investisseurs",
-    // icon: require('../assets/chat-bubbles.png'),
   },
   {
     id: '2',
     title: 'COMMUNAUTÉ FINARY',
     text: "Echangez avec d'autres investisseurs",
-    // icon: require('../assets/chat-bubbles.png'),
   },
   {
     id: '3',
     title: 'COMMUNAUTÉ FINARY',
     text: "Echangez avec d'autres investisseurs",
-    // icon: require('../assets/chat-bubbles.png'),
   },
   {
     id: '4',
     title: 'COMMUNAUTÉ FINARY',
     text: "Echangez avec d'autres investisseurs",
-    // icon: require('../assets/chat-bubbles.png'),
   },
   {
     id: '5',
     title: 'COMMUNAUTÉ FINARY',
     text: "Echangez avec d'autres investisseurs",
-    // icon: require('../assets/chat-bubbles.png'),
   },
   
 ];
@@ -145,7 +140,6 @@ export default function NewsCardCarousel() {
                   <Text style={{ color: 'white', fontWeight: 'bold', fontSize: 17, flex: 1 }}>
                     {item.text}
                   </Text>
-                  {/* <Image source={item.icon} style={{ width: 48, height: 48, marginLeft: 8 }} /> */}
                 </View>
               </LinearGradient>
             </Animated.View>
